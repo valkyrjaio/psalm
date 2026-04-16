@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "617effab5a6be6d75d83d6e487f0d7b0",
+    "content-hash": "2b6fc4a0dc9e17dea753db01b05a8973",
     "packages": [],
     "packages-dev": [
         {
@@ -122,16 +122,16 @@
         },
         {
             "name": "valkyrja/rector",
-            "version": "v26.0.1",
+            "version": "v26.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/valkyrjaio/rector.git",
-                "reference": "4bf60d7da8abbb86ddd9e43795a06430bf00066a"
+                "reference": "f12d6b9714b2b84b727a488b8a737876c36d30f3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/valkyrjaio/rector/zipball/4bf60d7da8abbb86ddd9e43795a06430bf00066a",
-                "reference": "4bf60d7da8abbb86ddd9e43795a06430bf00066a",
+                "url": "https://api.github.com/repos/valkyrjaio/rector/zipball/f12d6b9714b2b84b727a488b8a737876c36d30f3",
+                "reference": "f12d6b9714b2b84b727a488b8a737876c36d30f3",
                 "shasum": ""
             },
             "require": {
@@ -163,9 +163,9 @@
             ],
             "support": {
                 "issues": "https://github.com/valkyrjaio/rector/issues",
-                "source": "https://github.com/valkyrjaio/rector/tree/v26.0.1"
+                "source": "https://github.com/valkyrjaio/rector/tree/v26.1.0"
             },
-            "time": "2026-04-15T22:45:48+00:00"
+            "time": "2026-04-16T04:41:45+00:00"
         }
     ],
     "aliases": [],
