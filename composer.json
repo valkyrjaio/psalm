@@ -16,9 +16,7 @@
     }
   ],
   "require"           : {
-    "php" : ">=8.4"
-  },
-  "require-dev"       : {
+    "php"         : ">=8.4",
     "vimeo/psalm" : "^6.16.1"
   },
   "autoload"          : {
