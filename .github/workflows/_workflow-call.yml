@@ -1,0 +1,114 @@
+name: Psalm
+
+on:
+  workflow_call:
+    inputs:
+      php-version:
+        description: 'PHP version to use'
+        type: string
+        default: '8.4'
+      ci-directory:
+        description: 'Path to the CI directory (containing composer.json and the psalm config)'
+        type: string
+        default: '.github/ci/psalm'
+      additional-directory:
+        description: 'Path to an additional Composer dependencies directory (optional). Leave empty to skip.'
+        type: string
+        default: ''
+      extensions:
+        description: 'PHP extensions to install'
+        type: string
+        default: 'mbstring, intl'
+      run-script:
+        description: 'Composer script to run (e.g. psalm, psalm-shepherd-with-stats)'
+        type: string
+        default: 'psalm'
+      paths:
+        description: >
+          YAML filter spec for dorny/paths-filter.
+          Must define two keys: "ci" (the CI config files) and "files" (all files that should
+          trigger the check). The "ci" key controls whether the base-branch CI directory is
+          fetched; "files" controls whether the expensive steps run at all.
+        type: string
+        required: true
+
+jobs:
+  psalm:
+    name: PHP ${{ inputs.php-version }}
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Determine if workflow should run based on files changed
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: ${{ inputs.paths }}
+
+      - name: Get latest CI code from target
+        if: steps.changes.outputs.ci != 'true' && github.base_ref
+        env:
+          REF: ${{ github.base_ref }}
+        run: |
+          echo "Using CI code from $REF"
+          git fetch origin "$REF"
+          git checkout origin/"$REF" -- ${{ inputs.ci-directory }}
+
+      - name: Get latest additional CI code from target
+        if: inputs.additional-directory != '' && steps.changes.outputs.ci != 'true' && github.base_ref
+        env:
+          REF: ${{ github.base_ref }}
+        run: |
+          git checkout origin/"$REF" -- ${{ inputs.additional-directory }}
+
+      - name: Setup PHP
+        if: steps.changes.outputs.files == 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ inputs.php-version }}
+          extensions: ${{ inputs.extensions }}
+
+      - name: Install Composer dependencies
+        if: steps.changes.outputs.files == 'true'
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --prefer-dist --no-progress
+          custom-cache-suffix: $(date -u "+%Y-%m")
+
+      - name: Install Psalm Composer dependencies
+        if: steps.changes.outputs.files == 'true'
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --prefer-dist --no-progress
+          custom-cache-suffix: $(date -u "+%Y-%m")
+          working-directory: ${{ inputs.ci-directory }}
+
+      - name: Install Additional Composer dependencies
+        if: inputs.additional-directory != '' && steps.changes.outputs.files == 'true'
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --prefer-dist --no-progress
+          custom-cache-suffix: $(date -u "+%Y-%m")
+          working-directory: ${{ inputs.additional-directory }}
+
+      - name: Run Psalm
+        if: steps.changes.outputs.files == 'true'
+        id: psalm
+        env:
+          PSALM_ALLOW_XDEBUG: 1
+        run: composer ${{ inputs.run-script }}
+
+      - name: Report failure in PR comment
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          gh pr comment "$PR_URL" --body "Psalm failed. Please run \`composer psalm\` locally, fix all the issues, and commit the changes."
