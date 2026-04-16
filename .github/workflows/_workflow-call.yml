@@ -106,9 +106,9 @@ jobs:
         run: composer ${{ inputs.run-script }}
 
       - name: Report failure in PR comment
-        if: failure() && github.event_name == 'pull_request'
+        if: failure() && github.event.pull_request.number
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          gh pr comment "$PR_URL" --body "Psalm failed. Please run \`composer psalm\` locally, fix all the issues, and commit the changes."
+          gh pr comment ${{ github.event.pull_request.number }} --body "Psalm failed. Please run \`composer psalm\` locally, fix all the issues, and commit the changes."
