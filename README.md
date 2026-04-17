@@ -123,3 +123,49 @@ These issue types are suppressed globally via `<issueHandlers>`:
   See [vimeo/psalm#11723](https://github.com/vimeo/psalm/issues/11723).
 - An `autoload.php` is required in the CI directory to bootstrap the project
   autoloader before Psalm analyses the source.
+
+## Workflows
+
+The [`_workflow-call.yml`](.github/workflows/_workflow-call.yml) reusable
+workflow runs Psalm against the calling repository's source. It is designed to
+be called from other repositories via `workflow_call`.
+
+### Inputs
+
+| Input                  | Type    | Default              | Description                                                                                                                                           |
+|------------------------|---------|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `paths`                | string  | —                    | **Required.** YAML filter spec with two keys: `ci` (CI config files that trigger a base-branch fetch) and `files` (all files that trigger the check). |
+| `post-pr-comment`      | boolean | `true`               | Post a PR comment on failure and remove it on success. Disable when the calling workflow handles its own reporting.                                   |
+| `composer-options`     | string  | `''`                 | Extra flags passed to every `composer install` step (e.g. `--ignore-platform-req=ext-openswoole`).                                                    |
+| `php-version`          | string  | `'8.4'`              | PHP version to use.                                                                                                                                   |
+| `ci-directory`         | string  | `'.github/ci/psalm'` | Path to the CI directory containing `composer.json` and the tool config.                                                                              |
+| `extensions`           | string  | `'mbstring, intl'`   | PHP extensions to install via `shivammathur/setup-php`.                                                                                               |
+| `additional-directory` | string  | `''`                 | Path to an additional Composer dependencies directory to install before running Psalm. Leave empty to skip.                                           |
+| `run-script`           | string  | `'psalm'`            | Composer script to run (e.g. `psalm`, `psalm-shepherd`, `psalm-shepherd-with-stats`).                                                                 |
+
+### Usage
+
+```yaml
+jobs:
+  psalm:
+    uses: valkyrjaio/psalm/.github/workflows/_workflow-call.yml@master
+    permissions:
+      pull-requests: write
+      contents: read
+    with:
+      php-version: '8.4'
+      run-script: 'psalm-shepherd-with-stats'
+      paths: |
+        ci:
+          - '.github/ci/psalm/**'
+          - '.github/workflows/psalm.yml'
+        files:
+          - '.github/ci/psalm/**'
+          - '.github/workflows/psalm.yml'
+          - 'src/**/*.php'
+          - 'composer.json'
+    secrets: inherit
+```
+
+`secrets: inherit` is required to pass the `VALKYRJA_GHA_APP_ID` and
+`VALKYRJA_GHA_PRIVATE_KEY` org secrets used for PR comments.
